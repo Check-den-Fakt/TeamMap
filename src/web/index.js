@@ -3,7 +3,7 @@
 var maxClusterZoomLevel = 11;
 
 //The URL to the store location data.
-var storeLocationDataUrl = 'data/ContosoCoffee.txt';
+var storeLocationDataUrl = 'https://we-teammap-func.azurewebsites.net/api/GetTeamMembers';
 
 //The URL to the icon image. 
 var iconImageUrl = 'images/CoffeeIcon.png';
@@ -12,7 +12,7 @@ var iconImageUrl = 'images/CoffeeIcon.png';
 var countrySet = ['US', 'CA', 'GB', 'FR','DE','IT','ES','NL','DK'];      
 
 var map, popup, datasource, iconLayer, centerMarker, searchURL;
-var listItemTemplate = '<div class="listItem" onclick="itemSelected(\'{id}\')"><div class="listItem-title">{title}</div>{city}<br />Open until {closes}<br />{distance} miles away</div>';
+var listItemTemplate = '<div class="listItem" onclick="itemSelected(\'{id}\')"><div class="listItem-title">{name}</div>{title}</br>{city}</div>';
 
 function initialize() {
     //Initialize a map instance.
@@ -170,44 +170,19 @@ function loadStoreData() {
             //Parse the Tab delimited file data into GeoJSON features.
             var features = [];
 
-            //Split the lines of the file.
-            var lines = text.split('\n');
+            var members = JSON.parse(text);
 
-            //Grab the header row.
-            var row = lines[0].split('\t');
-
-            //Parse the header row and index each column, so that when our code for parsing each row is easier to follow.
-            var header = {};
-            var numColumns = row.length;
-            var i;
-
-            for (i = 0; i < row.length; i++) {
-                header[row[i]] = i;
-            }
-
-            //Skip the header row and then parse each row into a GeoJSON feature.
-            for (i = 1; i < lines.length; i++) {
-                row = lines[i].split('\t');
-
-                //Ensure that the row has the right number of columns.
-                if (row.length >= numColumns) {
-
-                    features.push(new atlas.data.Feature(new atlas.data.Point([parseFloat(row[header['Longitude']]), parseFloat(row[header['Latitude']])]), {
-                        AddressLine: row[header['AddressLine']],
-                        City: row[header['City']],
-                        Municipality: row[header['Municipality']],
-                        AdminDivision: row[header['AdminDivision']],
-                        Country: row[header['Country']],
-                        PostCode: row[header['PostCode']],
-                        Phone: row[header['Phone']],
-                        StoreType: row[header['StoreType']],
-                        IsWiFiHotSpot: (row[header['IsWiFiHotSpot']].toLowerCase() === 'true') ? true : false,
-                        IsWheelchairAccessible: (row[header['IsWheelchairAccessible']].toLowerCase() === 'true') ? true : false,
-                        Opens: parseInt(row[header['Opens']]),
-                        Closes: parseInt(row[header['Closes']])
-                    }));
-                }
-            }
+            members.forEach(value => {
+                features.push(new atlas.data.Feature(new atlas.data.Point([parseFloat(value.longitude), parseFloat(value.latitude)]), {
+                    AddressLine: value.street,
+                    City: value.city,
+                    Country: value.country,
+                    State: value.state,
+                    Name: value.rowKey,
+                    Description: value.description,
+                    ImageUrl: value.imageUrl
+                }));
+            });
 
             //Add the features to the data source.
             datasource.add(features);
@@ -329,20 +304,13 @@ function updateListItems() {
             properties = shape.getProperties();
 
             html.push('<div class="listItem" onclick="itemSelected(\'', shape.getId(), '\')"><div class="listItem-title">',
-                properties['AddressLine'],
+                properties['rowKey'],
                 '</div>',
 
                 //Get a formatted address line 2 value that consists of City, Municipality, AdminDivision, and PostCode.
                 getAddressLine2(properties),
-                '<br />',
-
-                //Convert the closing time into a nicely formated time.
-                getOpenTillTime(properties),
-                '<br />',
-
-                //Get the distance of the shape.
-                distances[shape.getId()],
-                ' miles away</div>');
+                '<br />'
+                );
         });
         
         listPanel.innerHTML = html.join('');
@@ -350,41 +318,6 @@ function updateListItems() {
         //Scroll to the top of the list panel incase the user has scrolled down.
         listPanel.scrollTop = 0;
     }
-}
-
-//This converts a time in 2400 format into an AM/PM time or noon/midnight string.
-function getOpenTillTime(properties) {
-    var time = properties['Closes'];
-    var t = time / 100;
-
-    var sTime;
-
-    if (time === 1200) {
-        sTime = 'noon';
-    } else if (time === 0 || time === 2400) {
-        sTime = 'midnight';
-    } else {
-        sTime = Math.round(t) + ':';
-
-        //Get the minutes.
-        t = (t - Math.round(t)) * 100;
-
-        if (t === 0) {
-            sTime += '00';
-        } else if (t < 10) {
-            sTime += '0' + t;
-        } else {
-            sTime += Math.round(t);
-        }
-
-        if (time < 1200) {
-            sTime += ' AM';
-        } else {
-            sTime += ' PM';
-        }
-    }
-
-    return 'Open until ' + sTime;
 }
 
 //When a user clicks on a result in the side panel, look up the shape by its id value and show popup.
@@ -431,41 +364,16 @@ function showPopup(shape) {
             </div>
      */
 
-    //Calculate the distance from the center of the map to the shape in miles, round to 2 decimals.
-    var distance = Math.round(atlas.math.getDistanceTo(map.getCamera().center, shape.getCoordinates(), 'miles') * 100)/100;
-
     var html = ['<div class="storePopup">'];
 
     html.push('<div class="popupTitle">',
-        properties['AddressLine'],
+        properties['Name'],
         '<div class="popupSubTitle">',
-        getAddressLine2(properties),
+        properties['Description'],
         '</div></div><div class="popupContent">',
-
-        //Convert the closing time into a nicely formated time.
-        getOpenTillTime(properties),
-
-        //Add the distance information.  
-        '<br/>', distance,
-        ' miles away',
-        '<br /><img src="images/PhoneIcon.png" title="Phone Icon"/><a href="tel:',
-        properties['Phone'],
-        '">', 
-        properties['Phone'],
-        '</a>'
+        getAddressLine2(properties),
+        '<br /><img src="' + properties['ImageUrl'], '"/>'
     );
-
-    if (properties['IsWiFiHotSpot'] || properties['IsWheelchairAccessible']) {
-        html.push('<br/>Amenities: ');
-
-        if (properties['IsWiFiHotSpot']) {
-            html.push('<img src="images/WiFiIcon.png" title="Wi-Fi Hotspot"/>');
-        }
-
-        if (properties['IsWheelchairAccessible']) {
-            html.push('<img src="images/WheelChair-small.png" title="Wheelchair Accessible"/>');
-        }
-    }
 
     html.push('</div></div>');
 
@@ -484,16 +392,16 @@ function showPopup(shape) {
 function getAddressLine2(properties) {
     var html = [properties['City']];
 
-    if (properties['Municipality']) {
-        html.push(', ', properties['Municipality']);
+    if (properties['Street']) {
+        html.push('<br />', properties['Street']);
     }
 
-    if (properties['AdminDivision']) {
-        html.push(', ', properties['AdminDivision']);
+    if (properties['State']) {
+        html.push('<br />', properties['State']);
     }
 
-    if (properties['PostCode']) {
-        html.push(' ', properties['PostCode']);
+    if (properties['Country']) {
+        html.push('<br />', properties['Country']);
     }
 
     return html.join('');
