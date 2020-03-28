@@ -26,7 +26,9 @@ namespace CheckDenFakt.Maps.TeamMember
                 Description = member.Description,
                 State = member.State,
                 Street = member.Street,
-                ImageUrl = member.ImageUrl
+                ImageUrl = member.ImageUrl,
+                Latitude = member.Latitude,
+                Longitude = member.Longitude
             };
 
             return teamMember;
