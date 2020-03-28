@@ -28,7 +28,8 @@ namespace CheckDenFakt.Maps.TeamMember
                 Street = member.Street,
                 ImageUrl = member.ImageUrl,
                 Latitude = member.Latitude,
-                Longitude = member.Longitude
+                Longitude = member.Longitude,
+                City = member.City
             };
 
             return teamMember;

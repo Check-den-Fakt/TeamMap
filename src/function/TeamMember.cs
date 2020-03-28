@@ -27,5 +27,7 @@ namespace CheckDenFakt.Maps.TeamMember
         public string Longitude { get; set; }
 
         public string Latitude { get; set; }
+
+        public string City { get; set; }
     }
 }
