@@ -3,13 +3,13 @@
 var maxClusterZoomLevel = 11;
 
 //The URL to the store location data.
-var storeLocationDataUrl = 'https://we-teammap-func.azurewebsites.net/api/GetTeamMembers';
+var storeLocationDataUrl = 'https://we-checkdenfakt-apimgm.azure-api.net/we-teammap-func/GetTeamMembers';
 
 //The URL to the icon image. 
 var iconImageUrl = 'images/CoffeeIcon.png';
 
 //An array of country region ISO2 values to limit searches to.
-var countrySet = ['US', 'CA', 'GB', 'FR','DE','IT','ES','NL','DK'];      
+var countrySet = ['AT', 'CH', 'DE'];      
 
 var map, popup, datasource, iconLayer, centerMarker, searchURL;
 var listItemTemplate = '<div class="listItem" onclick="itemSelected(\'{id}\')"><div class="listItem-title">{name}</div>{title}</br>{city}</div>';
@@ -163,7 +163,16 @@ function initialize() {
 
 function loadStoreData() {
     //Download the store location data.
-    fetch(storeLocationDataUrl)
+    fetch(storeLocationDataUrl,{
+        method: "GET",
+        mode: "cors",
+        cache: "default",
+        headers: {
+            'Content-Type': 'application/json',
+            'Ocp-Apim-Subscription-Key' : ""
+
+        }
+    })
         .then(response => response.text())
         .then(function (text) {
 
