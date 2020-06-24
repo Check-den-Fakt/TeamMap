@@ -3,10 +3,10 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "subscriptionId": {
-            "value": "db59ff20-bbda-4c19-a433-d5f11767ea07"
+            "value": "3fbd9eb7-31fc-4339-8fd8-8333603d58d4"
         },
         "name": {
-            "value": "we-teammap-func"
+            "value": "func-teammap-prod-we-001"
         },
         "location": {
             "value": "West Europe"
@@ -15,16 +15,16 @@
             "value": ""
         },
         "hostingPlanName": {
-            "value": "ASP-wemapsrg-9573"
+            "value": "plan-teammap-prod-we-001"
         },
         "serverFarmResourceGroup": {
-            "value": "we-maps-rg"
+            "value": "rg-teammap-prod-we-001"
         },
         "alwaysOn": {
             "value": false
         },
         "storageAccountName": {
-            "value": "weteammapfuncsa"
+            "value": "stteammapprodwe001"
         },
         "linuxFxVersion": {
             "value": ""
